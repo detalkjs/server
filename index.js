@@ -7,6 +7,7 @@ const { getComment } = require('./src/getComment');
 const md5 = require("js-md5");
 const marked = require("marked");
 const sanitizeHtml = require('sanitize-html');
+const version = require("package.json").version;
 
 function textconvert(text) {
     text = text.replace(/[<>&"]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c];});
@@ -28,7 +29,6 @@ app.use((req, res, next) => {
 });
 
 app.get('/', (req, res) => {
-    const version = require("package.json").version;
     res.send(JSON.stringify({
         version,
         message: "Detalk Server is running.",
