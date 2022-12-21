@@ -8,6 +8,7 @@ const md5 = require("js-md5");
 const marked = require("marked");
 const sanitizeHtml = require('sanitize-html');
 const version = require("package.json").version;
+const { generate } = require("./src/generate");
 
 function textconvert(text) {
     text = text.replace(/[<>&"]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c];});
@@ -39,13 +40,13 @@ app.get('/', (req, res) => {
 /**
  * Get Comments
  */
-app.get('/comment', async (req, res) => {
+app.get('/_api/comment', async (req, res) => {
     let obj = new URL("http://0.0.0.0"+req.url);
     let id = obj.searchParams.get("id");
     res.send(await getComment("CMT_" + id));
 });
 
-app.put('/comment', async (req, res) => {
+app.put('/_api/comment', async (req, res) => {
     req.on('data', async function(ck) {
         try {
             const rqb = JSON.parse(ck.toString());
@@ -120,7 +121,7 @@ app.put('/comment', async (req, res) => {
     });
 });
 
-app.delete("/comment", async (req, res) => {
+app.delete("/_api/comment", async (req, res) => {
     let obj = new URL("http://0.0.0.0"+req.url);
     let id = "CMT_" + obj.searchParams.get("id");
     let rpid = obj.searchParams.get("rpid");
@@ -176,4 +177,8 @@ app.delete("/comment", async (req, res) => {
 });
 
 
+app.get("/config", (req, res) => {
+    res.header('Content-Type', 'text/html');
+    res.send(generate("config"));
+})
 module.exports = app;
