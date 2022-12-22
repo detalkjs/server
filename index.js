@@ -43,7 +43,7 @@ app.get('/', (req, res) => {
 app.get('/_api/comment', async (req, res) => {
     let obj = new URL("http://0.0.0.0"+req.url);
     let id = obj.searchParams.get("id");
-    res.send(await getComment("CMT_" + id));
+    res.send(await getComment("CMT_" + id) || {key: "CMT_" + id, value: []});
 });
 
 app.put('/_api/comment', async (req, res) => {
