@@ -46,13 +46,17 @@ app.get('/_api/comment', async (req, res) => {
     let resp = await getComment("CMT_" + id) || {key: "CMT_" + id, value: []};
     if (resp.value.length > 0) {
         for (let i in resp.value) {
-            resp.value[i].auth = "";
-            resp.value[i].email = md5(resp.value[i].email);
-            if (resp.value[i].replies) {
-                for (let j in resp.value[i].replies) {
-                    resp.value[i].replies[j].auth = "";
-                    resp.value[i].replies[j].email = md5(resp.value[i].replies[j].email);
-                }
+            if (!resp.value[i].deleted) {
+                try {
+                    resp.value[i].auth = "";
+                    resp.value[i].email = md5(resp.value[i].email);
+                    if (resp.value[i].replies) {
+                        for (let j in resp.value[i].replies) {
+                            resp.value[i].replies[j].auth = "";
+                            resp.value[i].replies[j].email = md5(resp.value[i].replies[j].email);
+                        }
+                    } 
+                } catch(e) {}
             }
         }
     }
@@ -148,7 +152,8 @@ app.delete("/_api/comment", async (req, res) => {
         let ok = false;
         for (let o in bflist) {
             console.log(bflist[o].rpid, rpid);
-            if (bflist[o].rpid == rpid && bflist[o].auth == auth) {
+            if (bflist[o].rpid == rpid) {
+                if (bflist[o].auth != auth) throw "Unauthorized.";
                 // Catch ID
                 ok = true;
                 bflist[o] = { deleted: true };
@@ -166,7 +171,8 @@ app.delete("/_api/comment", async (req, res) => {
             if (bflist[o].replies) {
                 for (let j in bflist[o].replies) {
                     console.log(bflist[o].replies[j].rpid, rpid);
-                    if (rpid == bflist[o].replies[j].rpid && bflist[o].replies[j].auth == auth) {
+                    if (rpid == bflist[o].replies[j].rpid) {
+                        if (bflist[o].replies[j].auth != auth) throw "Unauthorized.";
                         ok = true;
                         bflist[o].replies[j] = { deleted: true };
                         let dbr = await db.put(bflist, id);
