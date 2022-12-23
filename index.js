@@ -61,7 +61,7 @@ app.put('/_api/comment', async (req, res) => {
     req.on('data', async function(ck) {
         try {
             const rqb = JSON.parse(ck.toString());
-            let { nickname, email, content, replyTo, url, id } = rqb;
+            let { nickname, email, content, replyTo, url, id, auth } = rqb;
             if (!nickname || !email || !content || !id) throw "Nickname, email, id or content is empty.";
             if (nickname.length >= 15 || content.length >= 500 || email.length >= 50 || url.length >= 100) throw "Nickname, email, url or content is too long.";
             url = url || "";
@@ -82,6 +82,7 @@ app.put('/_api/comment', async (req, res) => {
                     ip: req.headers['X-Real-Ip'],
                     ua: req.headers['user-agent'],
                     rpid: md5(Date.now() + nickname + email + content),
+                    auth,
                 });
                 let dbr = await db.put(bflist, fetchKey);
                 if (dbr) {
@@ -108,6 +109,7 @@ app.put('/_api/comment', async (req, res) => {
                             ua: req.headers['user-agent'],
                             timestamp: Date.now(),
                             rpid: md5(Date.now() + nickname + email + content),
+                            auth,
                         });
                         let dbr = await db.put(bflist, fetchKey);
                         if (dbr) {
@@ -137,13 +139,14 @@ app.delete("/_api/comment", async (req, res) => {
     let obj = new URL("http://0.0.0.0"+req.url);
     let id = "CMT_" + obj.searchParams.get("id") || "/";
     let rpid = obj.searchParams.get("rpid") || "";
+    let auth = obj.searchParams.get("auth") || "";
     // 删除评论
     try {
         let bflist = (await getComment(id)).value || [];
         let ok = false;
         for (let o in bflist) {
             console.log(bflist[o].rpid, rpid);
-            if (bflist[o].rpid == rpid) {
+            if (bflist[o].rpid == rpid && bflist[o].auth == auth) {
                 // Catch ID
                 ok = true;
                 bflist[o] = { deleted: true };
@@ -161,7 +164,7 @@ app.delete("/_api/comment", async (req, res) => {
             if (bflist[o].replies) {
                 for (let j in bflist[o].replies) {
                     console.log(bflist[o].replies[j].rpid, rpid);
-                    if (rpid == bflist[o].replies[j].rpid) {
+                    if (rpid == bflist[o].replies[j].rpid && bflist[o].replies[j].auth == auth) {
                         ok = true;
                         bflist[o].replies[j] = { deleted: true };
                         let dbr = await db.put(bflist, id);
