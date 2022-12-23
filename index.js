@@ -47,9 +47,11 @@ app.get('/_api/comment', async (req, res) => {
     if (resp.value.length > 0) {
         for (let i in resp.value) {
             resp.value[i].auth = "";
+            resp.value[i].email = md5(resp.value[i].email);
             if (resp.value[i].replies) {
                 for (let j in resp.value[i].replies) {
                     resp.value[i].replies[j].auth = "";
+                    resp.value[i].replies[j].email = md5(resp.value[i].replies[j].email);
                 }
             }
         }
