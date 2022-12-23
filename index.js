@@ -42,8 +42,19 @@ app.get('/', (req, res) => {
  */
 app.get('/_api/comment', async (req, res) => {
     let obj = new URL("http://0.0.0.0"+req.url);
-    let id = obj.searchParams.get("id");
-    res.send(await getComment("CMT_" + id) || {key: "CMT_" + id, value: []});
+    let id = obj.searchParams.get("id") || "/";
+    let resp = await getComment("CMT_" + id) || {key: "CMT_" + id, value: []};
+    if (resp.value.length > 0) {
+        for (let i in resp.value) {
+            resp.value[i].auth = "";
+            if (resp.value[i].replies) {
+                for (let j in resp.value[i].replies) {
+                    resp.value[i].replies[j].auth = "";
+                }
+            }
+        }
+    }
+    res.send(resp);
 });
 
 app.put('/_api/comment', async (req, res) => {
@@ -52,6 +63,7 @@ app.put('/_api/comment', async (req, res) => {
             const rqb = JSON.parse(ck.toString());
             let { nickname, email, content, replyTo, url, id } = rqb;
             if (!nickname || !email || !content || !id) throw "Nickname, email, id or content is empty.";
+            if (nickname.length >= 15 || content.length >= 500 || email.length >= 50 || url.length >= 100) throw "Nickname, email, url or content is too long.";
             url = url || "";
             nickname = textconvert(nickname);
             content = sanitizeHtml(marked.parse(content));
@@ -123,8 +135,8 @@ app.put('/_api/comment', async (req, res) => {
 
 app.delete("/_api/comment", async (req, res) => {
     let obj = new URL("http://0.0.0.0"+req.url);
-    let id = "CMT_" + obj.searchParams.get("id");
-    let rpid = obj.searchParams.get("rpid");
+    let id = "CMT_" + obj.searchParams.get("id") || "/";
+    let rpid = obj.searchParams.get("rpid") || "";
     // 删除评论
     try {
         let bflist = (await getComment(id)).value || [];
@@ -181,4 +193,6 @@ app.get("/config", (req, res) => {
     res.header('Content-Type', 'text/html');
     res.send(generate("config"));
 })
+
+
 module.exports = app;
