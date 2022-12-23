@@ -2,22 +2,25 @@
 
 > :tada: Detalk is a simple comment plugin.
 
+
+**If you want to add Detalk to your website, the fastest way is [@detalk/static](https://github.com/oCoke/detalk-static).**
+
 ## HTTP API
 
 ### Add Comment
 
 ```
-PUT /comment
+PUT /_api/comment
 ```
 
 ### Get Comment
 
 ```
-GET /comment
+GET /_api/comment
 ```
 
 ### Delete Comment
 
 ```
-delete /comment
+DELETE /_api/comment
 ```

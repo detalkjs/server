@@ -1,19 +1,29 @@
 {
-  "name": "detalk",
+  "name": "@detalk/server",
   "version": "1.0.0",
-  "description": "",
+  "description": "Detalk is a simple comment plugin.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "detalk",
+    "detalk-server",
+    "comment",
+    "comments",
+    "cky"
+  ],
+  "author": "CKY (@oCoke)",
+  "license": "MIT",
   "dependencies": {
     "deta": "^1.1.0",
     "express": "^4.18.2",
     "js-md5": "^0.7.3",
     "marked": "^4.2.4",
     "sanitize-html": "^2.8.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oCoke/detalk.git"
   }
 }
