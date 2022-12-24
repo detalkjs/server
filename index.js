@@ -70,7 +70,7 @@ app.put('/_api/comment', async (req, res) => {
             let { nickname, email, content, replyTo, url, id, auth } = rqb;
             if (!nickname || !email || !content || !id) throw "Nickname, email, id or content is empty.";
             if (nickname.length >= 15 || content.length >= 500 || email.length >= 50 || url.length >= 100) throw "Nickname, email, url or content is too long.";
-            url = url || "";
+            url = textconvert(url) || "";
             nickname = textconvert(nickname);
             content = sanitizeHtml(marked.parse(content));
             const fetchKey = "CMT_"+id;
@@ -209,5 +209,22 @@ app.get("/config", (req, res) => {
     res.send(generate("config"));
 })
 
+
+app.post("/_api/markdown", (req, res) => {
+    res.header('Content-Type', 'application/json');
+    req.on('data', async function(ck) {
+        try {
+            res.send({
+                success: true,
+                html: marked.parse(ck.toString()),
+            });
+        } catch (e) {
+            res.send({
+                success: false,
+                error: e,
+            });
+        }
+    });
+})
 
 module.exports = app;
