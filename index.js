@@ -79,6 +79,7 @@ app.put('/_api/comment', async (req, res) => {
             if (!bflist) { bflist = []; }
             if (!replyTo) {
                 // 独立评论
+                let rpid = md5(Date.now() + nickname + email + content);
                 bflist.push({
                     nickname,
                     email,
@@ -87,7 +88,7 @@ app.put('/_api/comment', async (req, res) => {
                     timestamp: Date.now(),
                     ip: req.headers['X-Real-Ip'],
                     ua: req.headers['user-agent'],
-                    rpid: md5(Date.now() + nickname + email + content),
+                    rpid,
                     auth,
                 });
                 let dbr = await db.put(bflist, fetchKey);
@@ -95,6 +96,7 @@ app.put('/_api/comment', async (req, res) => {
                     res.send(JSON.stringify({
                         success: true,
                         message: "Comment sended.",
+                        rpid,
                     }));
                 } else {
                     throw "Failed to put comment.";
@@ -104,6 +106,7 @@ app.put('/_api/comment', async (req, res) => {
                 let ok = false;
                 for (let i of bflist) {
                     if (i.rpid == replyTo) {
+                        let rpid = md5(Date.now() + nickname + email + content);
                         ok = true;
                         i.replies = i.replies || [];
                         i.replies.push({
@@ -114,7 +117,7 @@ app.put('/_api/comment', async (req, res) => {
                             ip: req.headers['X-Real-Ip'],
                             ua: req.headers['user-agent'],
                             timestamp: Date.now(),
-                            rpid: md5(Date.now() + nickname + email + content),
+                            rpid,
                             auth,
                         });
                         let dbr = await db.put(bflist, fetchKey);
@@ -122,6 +125,7 @@ app.put('/_api/comment', async (req, res) => {
                             res.send(JSON.stringify({
                                 success: true,
                                 message: "Comment sended.",
+                                rpid,
                             }));
                         } else {
                             throw "Failed to put comment.";
