@@ -158,7 +158,7 @@ app.delete("/_api/comment", async (req, res) => {
         for (let o in bflist) {
             console.log(bflist[o].rpid, rpid);
             if (bflist[o].rpid == rpid) {
-                if (bflist[o].auth != auth) throw "Unauthorized.";
+                if (bflist[o].auth != auth && !(await checkToken(auth))) throw "Unauthorized.";
                 // Catch ID
                 ok = true;
                 bflist[o] = { deleted: true };
@@ -177,7 +177,7 @@ app.delete("/_api/comment", async (req, res) => {
                 for (let j in bflist[o].replies) {
                     console.log(bflist[o].replies[j].rpid, rpid);
                     if (rpid == bflist[o].replies[j].rpid) {
-                        if (bflist[o].replies[j].auth != auth) throw "Unauthorized.";
+                        if (bflist[o].replies[j].auth != auth && !(await checkToken(auth))) throw "Unauthorized.";
                         ok = true;
                         bflist[o].replies[j] = { deleted: true };
                         let dbr = await db.put(bflist, id);
