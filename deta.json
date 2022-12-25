@@ -1,0 +1,7 @@
+{
+    "name": "Detalk Server",
+    "description": "Detalk is a simple comment plugin.", 
+    "runtime": "nodejs14.x",
+    "env": [],
+    "cron": ""
+}
