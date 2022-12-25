@@ -213,11 +213,13 @@ app.get("/config", (req, res) => {
 
 // 登录
 app.get("/_api/login", async (req, res) => {
-    let username = await db.get('DETALK_USERNAME');
-    let password = await db.get('DETALK_PASSWORD');
+    let username = (await db.get('DETALK_USERNAME')).value;
+    let password = (await db.get('DETALK_PASSWORD')).value;
     let obj = new URL("http://0.0.0.0"+req.url);
-    p_username = obj.searchParams.get("username") || "";
-    p_password = obj.searchParams.get("password") || "";
+    let p_username = obj.searchParams.get("username") || "";
+    let p_password = obj.searchParams.get("password") || "";
+    console.log(username, p_username)
+    console.log(password, p_password)
     if (username == p_username && password == p_password) {
         let token = md5(new Date().getFullYear() + (new Date().getMonth() + 1) + username + password + "DETALK");
         res.send({
@@ -251,8 +253,8 @@ app.get("/_api/token", async (req, res) => {
 // 注册
 
 app.get("/_api/reg", async (req, res) => {
-    let username = await db.get('DETALK_USERNAME');
-    let password = await db.get('DETALK_PASSWORD');
+    let username = (await db.get('DETALK_USERNAME')).value;
+    let password = (await db.get('DETALK_PASSWORD')).value;
     if (username && password) {
         res.send({
             success: false,
@@ -284,6 +286,40 @@ app.get("/_api/reg", async (req, res) => {
         res.send({
             success: false,
             error: "Failed to register.",
+        });
+    }
+})
+
+app.get("/_api/all", async (req, res) => {
+    try {
+        let obj = new URL("http://0.0.0.0"+req.url);
+        let token = obj.searchParams.get("token") || "";
+        if (await checkToken(token)) {
+            // let all = await db.fetch({
+            //     "key?contains": "CMT_"
+            // });
+            let all = await db.fetch();
+            let data = [];
+            for (let i in all.items) {
+                if (all.items[i].key.startsWith("CMT_")) {
+                    data.push(all.items[i].key);
+                }
+            }
+            res.send({
+                success: true,
+                data,
+            });
+        } else {
+            res.send({
+                success: false,
+                error: "Unauthorized.",
+            })
+        }
+    } catch(e) {
+        console.warn(e);
+        res.send({
+            success: false,
+            error: e,
         });
     }
 })
