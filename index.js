@@ -151,6 +151,10 @@ app.delete("/_api/comment", async (req, res) => {
     let id = "CMT_" + obj.searchParams.get("id") || "/";
     let rpid = obj.searchParams.get("rpid") || "";
     let auth = obj.searchParams.get("auth") || "";
+    let hide = obj.searchParams.get("hide") || false;
+    let unhide = obj.searchParams.get("unhide") || false;
+    unhide = Boolean(unhide);
+    hide = Boolean(hide);
     // 删除评论
     try {
         let bflist = (await getComment(id)).value || [];
@@ -161,7 +165,13 @@ app.delete("/_api/comment", async (req, res) => {
                 if (bflist[o].auth != auth && !(await checkToken(auth))) throw "Unauthorized.";
                 // Catch ID
                 ok = true;
-                bflist[o] = { deleted: true };
+                if (!hide && !unhide) {
+                    bflist[o] = { deleted: true };
+                } else if (unhide) {
+                    bflist[o].deleted = false;
+                } else {
+                    bflist[o].deleted = true;
+                }
                 let dbr = await db.put(bflist, id);
                 if (dbr) {
                     res.send(JSON.stringify({
@@ -179,7 +189,13 @@ app.delete("/_api/comment", async (req, res) => {
                     if (rpid == bflist[o].replies[j].rpid) {
                         if (bflist[o].replies[j].auth != auth && !(await checkToken(auth))) throw "Unauthorized.";
                         ok = true;
-                        bflist[o].replies[j] = { deleted: true };
+                        if (!hide && !unhide) {
+                            bflist[o].replies[j] = { deleted: true };
+                        } else if (unhide) {
+                            bflist[o].replies[j].deleted = false;
+                        } else {
+                            bflist[o].replies[j].deleted = true;
+                        }
                         let dbr = await db.put(bflist, id);
                         if (dbr) {
                             res.send(JSON.stringify({
