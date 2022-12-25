@@ -4,6 +4,7 @@ const { Deta } = require('deta');
 const deta = Deta();
 const db = deta.Base('detalk');
 const { getComment } = require('./src/getComment');
+const { checkToken } = require('./src/checkToken');
 const md5 = require("js-md5");
 const marked = require("marked");
 const sanitizeHtml = require('sanitize-html');
@@ -209,6 +210,83 @@ app.get("/config", (req, res) => {
     res.send(generate("config"));
 })
 
+
+// 登录
+app.get("/_api/login", async (req, res) => {
+    let username = await db.get('DETALK_USERNAME');
+    let password = await db.get('DETALK_PASSWORD');
+    let obj = new URL("http://0.0.0.0"+req.url);
+    p_username = obj.searchParams.get("username") || "";
+    p_password = obj.searchParams.get("password") || "";
+    if (username == p_username && password == p_password) {
+        let token = md5(new Date().getFullYear() + (new Date().getMonth() + 1) + username + password + "DETALK");
+        res.send({
+            success: true,
+            token,
+        });
+    } else {
+        res.send({
+            success: false,
+            error: "Invalid username or password.",
+        });
+    }
+})
+
+// 检查 Token 是否有效
+app.get("/_api/token", async (req, res) => {
+    let obj = new URL("http://0.0.0.0"+req.url);
+    let token = obj.searchParams.get("token") || "";
+    if (await checkToken(token)) {
+        res.send({
+            success: true,
+        });
+    } else {
+        res.send({
+            success: false,
+            error: "Invalid token.",
+        });
+    }
+})
+
+// 注册
+
+app.get("/_api/reg", async (req, res) => {
+    let username = await db.get('DETALK_USERNAME');
+    let password = await db.get('DETALK_PASSWORD');
+    if (username && password) {
+        res.send({
+            success: false,
+            error: "Already registered.",
+            reg: true,
+        });
+        return false;
+    }
+    let obj = new URL("http://0.0.0.0"+req.url);
+    username = obj.searchParams.get("username") || "";
+    password = obj.searchParams.get("password") || "";
+    if (!username || !password || username.length > 15) {
+        res.send({
+            success: false,
+            error: "Invalid username or password.",
+            reg: false,
+        });
+        return false;
+    }
+    let usrdb = await db.put(username, 'DETALK_USERNAME');
+    let pwddb = await db.put(password, 'DETALK_PASSWORD');
+    if (usrdb && pwddb) {
+        res.send({
+            success: true,
+            message: "Registered.",
+            token: md5(new Date().getFullYear() + (new Date().getMonth() + 1) + username + password + "DETALK"),
+        });
+    } else {
+        res.send({
+            success: false,
+            error: "Failed to register.",
+        });
+    }
+})
 
 app.post("/_api/markdown", (req, res) => {
     res.header('Content-Type', 'application/json');
