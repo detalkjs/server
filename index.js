@@ -10,7 +10,8 @@ const marked = require("marked");
 const sanitizeHtml = require('sanitize-html');
 const version = require("package.json").version;
 const { generate } = require("./src/generate");
-
+const { afterComment } = require("./src/action/afterComment");
+const { beforeComment } = require("./src/action/beforeComment");
 function textconvert(text) {
     text = text.replace(/[<>&"]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c];});
     text = text.replace(/\r?\n/g," ");
@@ -81,7 +82,7 @@ app.put('/_api/comment', async (req, res) => {
             if (!replyTo) {
                 // 独立评论
                 let rpid = md5(Date.now() + nickname + email + content);
-                bflist.push({
+                let data = {
                     nickname,
                     email,
                     content,
@@ -91,9 +92,12 @@ app.put('/_api/comment', async (req, res) => {
                     ua: req.headers['user-agent'],
                     rpid,
                     auth,
-                });
+                };
+                data = await beforeComment(data);
+                bflist.push(data);
                 let dbr = await db.put(bflist, fetchKey);
                 if (dbr) {
+                    afterComment(data);
                     res.send(JSON.stringify({
                         success: true,
                         message: "Comment sended.",
@@ -110,7 +114,7 @@ app.put('/_api/comment', async (req, res) => {
                         let rpid = md5(Date.now() + nickname + email + content);
                         ok = true;
                         i.replies = i.replies || [];
-                        i.replies.push({
+                        let data = {
                             nickname,
                             email,
                             content,
@@ -120,9 +124,12 @@ app.put('/_api/comment', async (req, res) => {
                             timestamp: Date.now(),
                             rpid,
                             auth,
-                        });
+                        };
+                        data = await beforeComment(data);
+                        i.replies.push(data);
                         let dbr = await db.put(bflist, fetchKey);
                         if (dbr) {
+                            afterComment(data);
                             res.send(JSON.stringify({
                                 success: true,
                                 message: "Comment sended.",
