@@ -168,9 +168,9 @@ app.delete("/_api/comment", async (req, res) => {
                 if (!hide && !unhide) {
                     bflist[o] = { deleted: true };
                 } else if (unhide) {
-                    bflist[o].deleted = false;
+                    bflist[o].hide = false;
                 } else {
-                    bflist[o].deleted = true;
+                    bflist[o].hide = true;
                 }
                 let dbr = await db.put(bflist, id);
                 if (dbr) {
