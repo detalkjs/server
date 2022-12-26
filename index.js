@@ -47,6 +47,7 @@ app.get('/_api/comment', async (req, res) => {
     let id = obj.searchParams.get("id") || "/";
     let page = obj.searchParams.get("pageid") || "0";
     let pageSize = obj.searchParams.get("pagesize") || "1";
+    let all = obj.searchParams.get("all") || false;
     // 时间正序
     let timeFst = obj.searchParams.get("timefst") || false;
     timeFst = Boolean(timeFst);
@@ -65,6 +66,24 @@ app.get('/_api/comment', async (req, res) => {
     console.log(fromPage, toPage);
     let rtData = [];
     let hasNextPage = false;
+    if (all) {
+        for (let i in resp.value) {
+            resp.value[i].auth = "";
+            resp.value[i].email = md5(resp.value[i].email);
+            if (resp.value[i].replies) {
+                for (let j in resp.value[i].replies) {
+                    resp.value[i].replies[j].auth = "";
+                    resp.value[i].replies[j].email = md5(resp.value[i].replies[j].email);
+                }
+            }
+        }
+        res.send({
+            value: resp.value,
+            success: true,
+            length: resp.value.length
+        });
+        return true;
+    }
     if (resp.value.length > 0) {
         // resp.value
         console.log("ok");
