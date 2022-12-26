@@ -68,14 +68,16 @@ app.get('/_api/comment', async (req, res) => {
     let hasNextPage = false;
     if (all) {
         for (let i in resp.value) {
-            resp.value[i].auth = "";
-            resp.value[i].email = md5(resp.value[i].email);
-            if (resp.value[i].replies) {
-                for (let j in resp.value[i].replies) {
-                    resp.value[i].replies[j].auth = "";
-                    resp.value[i].replies[j].email = md5(resp.value[i].replies[j].email);
+            try {
+                resp.value[i].auth = "";
+                resp.value[i].email = md5(resp.value[i].email);
+                if (resp.value[i].replies) {
+                    for (let j in resp.value[i].replies) {
+                        resp.value[i].replies[j].auth = "";
+                        resp.value[i].replies[j].email = md5(resp.value[i].replies[j].email);
+                    }
                 }
-            }
+            } catch(e) {}
         }
         res.send({
             value: resp.value,
@@ -88,7 +90,7 @@ app.get('/_api/comment', async (req, res) => {
         // resp.value
         console.log("ok");
         if (timeFst) {
-            for (let i = fromPage; i >= toPage; i--) {
+            for (let i = fromPage; i > toPage; i--) {
                 console.log(rtData);
                 if (!resp.value[i]) {
                     hasNextPage = false;
@@ -107,7 +109,7 @@ app.get('/_api/comment', async (req, res) => {
                 rtData.push(resp.value[i]);
             }
         } else {
-            for (let i = fromPage; i <= toPage; i++) {
+            for (let i = fromPage; i < toPage; i++) {
                 console.log(rtData);
                 try {
                     resp.value[i].auth = "";
