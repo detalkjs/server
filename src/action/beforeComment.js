@@ -1,6 +1,6 @@
 // 评论前执行
 
-module.exports.before = async (data) => {
+module.exports.beforeComment = async (data) => {
     
     return data;
 }

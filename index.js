@@ -45,10 +45,36 @@ app.get('/', (req, res) => {
 app.get('/_api/comment', async (req, res) => {
     let obj = new URL("http://0.0.0.0"+req.url);
     let id = obj.searchParams.get("id") || "/";
+    let page = obj.searchParams.get("pageid") || "0";
+    let pageSize = obj.searchParams.get("pagesize") || "1";
+    // 时间正序
+    let timeFst = obj.searchParams.get("timefst") || false;
+    timeFst = Boolean(timeFst);
+    page = Number(page) || 0;
+    
     let resp = await getComment("CMT_" + id) || {key: "CMT_" + id, value: []};
+
+    let fromPage, toPage;
+    if (!timeFst) {
+        toPage = (page + 1) * (Number(pageSize) - 1);
+        fromPage = page * (Number(pageSize) - 1);
+    } else {
+        fromPage = (resp.value.length - 1) - (page * Number(pageSize));
+        toPage = fromPage - Number(pageSize);
+    }
+    console.log(fromPage, toPage);
+    let rtData = [];
+    let hasNextPage = false;
     if (resp.value.length > 0) {
-        for (let i in resp.value) {
-            if (!resp.value[i].deleted) {
+        // resp.value
+        console.log("ok");
+        if (timeFst) {
+            for (let i = fromPage; i >= toPage; i--) {
+                console.log(rtData);
+                if (!resp.value[i]) {
+                    hasNextPage = false;
+                    break;
+                }
                 try {
                     resp.value[i].auth = "";
                     resp.value[i].email = md5(resp.value[i].email);
@@ -57,12 +83,35 @@ app.get('/_api/comment', async (req, res) => {
                             resp.value[i].replies[j].auth = "";
                             resp.value[i].replies[j].email = md5(resp.value[i].replies[j].email);
                         }
-                    } 
+                    }
                 } catch(e) {}
+                rtData.push(resp.value[i]);
+            }
+        } else {
+            for (let i = fromPage; i <= toPage; i++) {
+                console.log(rtData);
+                try {
+                    resp.value[i].auth = "";
+                    resp.value[i].email = md5(resp.value[i].email);
+                    if (resp.value[i].replies) {
+                        for (let j in resp.value[i].replies) {
+                            resp.value[i].replies[j].auth = "";
+                            resp.value[i].replies[j].email = md5(resp.value[i].replies[j].email);
+                        }
+                    }
+                } catch(e) {}
+                rtData.push(resp.value[i]);
             }
         }
+        if (resp.value[toPage+1]) hasNextPage = true;
     }
-    res.send(resp);
+
+    res.send({
+        value: rtData,
+        success: true,
+        hasNextPage,
+        length: resp.value.length
+    });
 });
 
 app.put('/_api/comment', async (req, res) => {
@@ -173,13 +222,20 @@ app.delete("/_api/comment", async (req, res) => {
                 // Catch ID
                 ok = true;
                 if (!hide && !unhide) {
-                    bflist[o] = { deleted: true };
+                    delete bflist[o];
                 } else if (unhide) {
                     bflist[o].hide = false;
                 } else {
                     bflist[o].hide = true;
                 }
-                let dbr = await db.put(bflist, id);
+                let bfl = bflist.filter(function (s) {
+                    if (s == null) {
+                        return false;
+                    } else {
+                        return s;
+                    }
+                });
+                let dbr = await db.put(bfl, id);
                 if (dbr) {
                     res.send(JSON.stringify({
                         success: true,
@@ -197,13 +253,20 @@ app.delete("/_api/comment", async (req, res) => {
                         if (bflist[o].replies[j].auth != auth && !(await checkToken(auth))) throw "Unauthorized.";
                         ok = true;
                         if (!hide && !unhide) {
-                            bflist[o].replies[j] = { deleted: true };
+                            delete bflist[o].replies[j];
                         } else if (unhide) {
-                            bflist[o].replies[j].deleted = false;
+                            bflist[o].replies[j].hide = false;
                         } else {
-                            bflist[o].replies[j].deleted = true;
+                            bflist[o].replies[j].hide = true;
                         }
-                        let dbr = await db.put(bflist, id);
+                        let bfl = bflist.filter(function (s) {
+                            if (s == null) {
+                                return false;
+                            } else {
+                                return s;
+                            }
+                        });
+                        let dbr = await db.put(bfl, id);
                         if (dbr) {
                             res.send(JSON.stringify({
                                 success: true,
