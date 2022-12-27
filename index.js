@@ -68,6 +68,12 @@ app.get('/_api/comment', async (req, res) => {
     if (fromPage == 0 || fromPage == resp.value.length -1) {
         resp.value[resp.top].email = md5(resp.value[resp.top].email);
         resp.value[resp.top].auth = "";
+        if (resp.value[resp.top].replies) {
+            for (let j in resp.value[resp.top].replies) {
+                resp.value[resp.top].replies[j].auth = "";
+                resp.value[resp.top].replies[j].email = md5(resp.value[resp.top].replies[j].email);
+            }
+        }
         rtData.push(resp.value[resp.top]);
     }
     let hasNextPage = false;
