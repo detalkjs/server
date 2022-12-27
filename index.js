@@ -66,15 +66,18 @@ app.get('/_api/comment', async (req, res) => {
     console.log(fromPage, toPage);
     let rtData = [];
     if (fromPage == 0 || fromPage == resp.value.length -1) {
-        resp.value[resp.top].email = md5(resp.value[resp.top].email);
-        resp.value[resp.top].auth = "";
-        if (resp.value[resp.top].replies) {
-            for (let j in resp.value[resp.top].replies) {
-                resp.value[resp.top].replies[j].auth = "";
-                resp.value[resp.top].replies[j].email = md5(resp.value[resp.top].replies[j].email);
+        try {
+            let topi = JSON.parse(JSON.stringify(resp.value[resp.top]));
+            topi.email = md5(topi.email);
+            topi.auth = "";
+            if (topi.replies) {
+                for (let j in topi.replies) {
+                    topi.replies[j].auth = "";
+                    topi.replies[j].email = md5(topi.replies[j].email);
+                }
             }
-        }
-        rtData.push(resp.value[resp.top]);
+            rtData.push(topi);
+        } catch(e) {console.warn(e)}
     }
     let hasNextPage = false;
     if (all) {
