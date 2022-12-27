@@ -66,6 +66,8 @@ app.get('/_api/comment', async (req, res) => {
     console.log(fromPage, toPage);
     let rtData = [];
     if (fromPage == 0 || fromPage == resp.value.length -1) {
+        resp.value[resp.top].email = md5(resp.value[resp.top].email);
+        resp.value[resp.top].auth = "";
         rtData.push(resp.value[resp.top]);
     }
     let hasNextPage = false;
