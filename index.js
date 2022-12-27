@@ -65,6 +65,9 @@ app.get('/_api/comment', async (req, res) => {
     }
     console.log(fromPage, toPage);
     let rtData = [];
+    if (fromPage == 0 || fromPage == resp.value.length -1) {
+        rtData.push(resp.value[resp.top]);
+    }
     let hasNextPage = false;
     if (all) {
         for (let i in resp.value) {
@@ -149,6 +152,7 @@ app.put('/_api/comment', async (req, res) => {
                 }
                 label = "admin";
             }
+            console.log(label);
             if (!nickname || !email || !content || !id) throw "Nickname, email, id or content is empty.";
             if (nickname.length >= 15 || content.length >= 500 || email.length >= 50 || url.length >= 100) throw "Nickname, email, url or content is too long.";
             url = textconvert(url) || "";
@@ -175,7 +179,10 @@ app.put('/_api/comment', async (req, res) => {
                 };
                 data = await beforeComment(data);
                 bflist.push(data);
-                let dbr = await db.put(bflist, fetchKey);
+                let dbr = await db.put({
+                    ...await getComment(fetchKey),
+                    value: bflist,
+                }, fetchKey);
                 if (dbr) {
                     afterComment(data);
                     res.send(JSON.stringify({
@@ -208,7 +215,10 @@ app.put('/_api/comment', async (req, res) => {
                         };
                         data = await beforeComment(data);
                         i.replies.push(data);
-                        let dbr = await db.put(bflist, fetchKey);
+                        let dbr = await db.put({
+                            ...await getComment(fetchKey),
+                            value: bflist,
+                        }, fetchKey);
                         if (dbr) {
                             afterComment(data);
                             res.send(JSON.stringify({
@@ -267,7 +277,10 @@ app.delete("/_api/comment", async (req, res) => {
                         return s;
                     }
                 });
-                let dbr = await db.put(bfl, id);
+                let dbr = await db.put({
+                    ...await getComment(fetchKey),
+                    value: bfl,
+                }, id);
                 if (dbr) {
                     res.send(JSON.stringify({
                         success: true,
@@ -298,7 +311,10 @@ app.delete("/_api/comment", async (req, res) => {
                                 return s;
                             }
                         });
-                        let dbr = await db.put(bfl, id);
+                        let dbr = await db.put({
+                            ...await getComment(fetchKey),
+                            value: bfl,
+                        }, id);
                         if (dbr) {
                             res.send(JSON.stringify({
                                 success: true,
@@ -383,6 +399,81 @@ app.get("/_api/profile", async (req, res) => {
             email,
             link,
         });
+    } else {
+        res.send({
+            success: false,
+            error: "Invalid token.",
+        });
+    }
+})
+
+// 置顶
+app.get("/_api/top", async (req, res) => {
+    let obj = new URL("http://0.0.0.0"+req.url);
+    let token = obj.searchParams.get("token") || "";
+    let pid = obj.searchParams.get("page") || "";
+    let rpid = obj.searchParams.get("rpid") || "";
+    pid = "CMT_" + pid;
+    if (await checkToken(token)) {
+        let resp = await getComment(pid);
+        let top = -1;
+        for (let i in resp.value) {
+            if (resp.value[i].rpid == rpid) {
+                top = i;
+                break;
+            }
+        }
+        if (top == -1) {
+            res.send({
+                success: false,
+                error: "Comment not found.",
+            });
+            return false;
+        }
+        resp.top = top;
+        resp.value[top].top = true;
+        let dbr = await db.put(resp, pid);
+        if (dbr) {
+            res.send({
+                success: true,
+            });
+        } else {
+            res.send({
+                success: false,
+                error: "Failed.",
+            });
+        }
+    } else {
+        res.send({
+            success: false,
+            error: "Invalid token.",
+        });
+    }
+})
+
+// 取消置顶
+
+app.delete("/_api/top", async (req, res) => {
+    let obj = new URL("http://0.0.0.0"+req.url);
+    let token = obj.searchParams.get("token") || "";
+    let pid = obj.searchParams.get("page") || "";
+    pid = "CMT_" + pid;
+    if (await checkToken(token)) {
+        let resp = await getComment(pid);
+        let top = resp.top;
+        resp.value[top].top = false;
+        resp.top = null;
+        let dbr = await db.put(resp, pid);
+        if (dbr) {
+            res.send({
+                success: true,
+            });
+        } else {
+            res.send({
+                success: false,
+                error: "Failed.",
+            });
+        }
     } else {
         res.send({
             success: false,
