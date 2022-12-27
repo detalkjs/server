@@ -357,6 +357,29 @@ app.get("/_api/token", async (req, res) => {
     }
 })
 
+// 用户信息
+
+app.get("/_api/profile", async (req, res) => {
+    let obj = new URL("http://0.0.0.0"+req.url);
+    let token = obj.searchParams.get("token") || "";
+    if (await checkToken(token)) {
+        let nickname = (await db.get("ADMIN_NICKNAME")).value;
+        let email = (await db.get("ADMIN_EMAIL")).value;
+        let link = (await db.get("ADMIN_LINK")).value;
+        res.send({
+            success: true,
+            nickname,
+            email,
+            link,
+        });
+    } else {
+        res.send({
+            success: false,
+            error: "Invalid token.",
+        });
+    }
+})
+
 // 注册
 
 app.get("/_api/reg", async (req, res) => {
