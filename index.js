@@ -140,6 +140,15 @@ app.put('/_api/comment', async (req, res) => {
         try {
             const rqb = JSON.parse(ck.toString());
             let { nickname, email, content, replyTo, url, id, auth } = rqb;
+            let label = null;
+            if (checkToken(auth)) {
+                if ((!nickname || !email || !url)) {
+                    nickname = (await db.get("ADMIN_NICKNAME")).value;
+                    email = (await db.get("ADMIN_EMAIL")).value;
+                    url = (await db.get("ADMIN_LINK")).value;
+                }
+                label = "admin";
+            }
             if (!nickname || !email || !content || !id) throw "Nickname, email, id or content is empty.";
             if (nickname.length >= 15 || content.length >= 500 || email.length >= 50 || url.length >= 100) throw "Nickname, email, url or content is too long.";
             url = textconvert(url) || "";
@@ -162,6 +171,7 @@ app.put('/_api/comment', async (req, res) => {
                     ua: req.headers['user-agent'],
                     rpid,
                     auth,
+                    label,
                 };
                 data = await beforeComment(data);
                 bflist.push(data);
@@ -194,6 +204,7 @@ app.put('/_api/comment', async (req, res) => {
                             timestamp: Date.now(),
                             rpid,
                             auth,
+                            label,
                         };
                         data = await beforeComment(data);
                         i.replies.push(data);
