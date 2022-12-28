@@ -12,6 +12,7 @@ const version = require("package.json").version;
 const { generate } = require("./src/generate");
 const { afterComment } = require("./src/action/afterComment");
 const { beforeComment } = require("./src/action/beforeComment");
+const { githubLogin } = require('./src/login/github');
 function textconvert(text) {
     text = text.replace(/[<>&"]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c];});
     text = text.replace(/\r?\n/g," ");
@@ -400,6 +401,21 @@ app.get("/_api/token", async (req, res) => {
 app.get("/_api/profile", async (req, res) => {
     let obj = new URL("http://0.0.0.0"+req.url);
     let token = obj.searchParams.get("token") || "";
+    if (token.startsWith("gh_")) {
+        try {
+            let gh = obj.searchParams.get("github") || "";
+            let usr = await githubLogin(token.split("gh_")[1], gh);
+            res.send(usr);
+            return true;
+        } catch (e) {
+            console.warn(e);
+            res.send({
+                success: false,
+                error: e,
+            });
+            return false;
+        }
+    }
     if (await checkToken(token)) {
         let nickname = (await db.get("ADMIN_NICKNAME")).value;
         let email = (await db.get("ADMIN_EMAIL")).value;
