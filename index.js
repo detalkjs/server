@@ -259,6 +259,7 @@ app.put('/_api/comment', async (req, res) => {
 app.delete("/_api/comment", async (req, res) => {
     let obj = new URL("http://0.0.0.0"+req.url);
     let id = "CMT_" + obj.searchParams.get("id") || "/";
+    let fetchKey  = id;
     let rpid = obj.searchParams.get("rpid") || "";
     let auth = obj.searchParams.get("auth") || "";
     let hide = obj.searchParams.get("hide") || false;
