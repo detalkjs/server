@@ -156,7 +156,7 @@ app.put('/_api/comment', async (req, res) => {
             const rqb = JSON.parse(ck.toString());
             let { nickname, email, content, replyTo, url, id, auth } = rqb;
             let label = null;
-            if (checkToken(auth)) {
+            if (await checkToken(auth)) {
                 if ((!nickname || !email || !url)) {
                     nickname = (await db.get("ADMIN_NICKNAME")).value;
                     email = (await db.get("ADMIN_EMAIL")).value;
