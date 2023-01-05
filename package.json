@@ -21,6 +21,7 @@
     "js-base64": "^3.7.3",
     "js-md5": "^0.7.3",
     "marked": "^4.2.4",
+    "node-fetch": "^2.6.7",
     "sanitize-html": "^2.8.0"
   },
   "repository": {

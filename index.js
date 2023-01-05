@@ -602,4 +602,100 @@ app.post("/_api/markdown", (req, res) => {
     });
 })
 
+app.put("/_api/config", (req, res) => {
+    req.on('data', async function(ck) {
+        try {
+            let oj = new URL("http://0.0.0.0"+req.url);
+            let token = oj.searchParams.get("token") || "";
+            if (await checkToken(token)) {
+                let obj = JSON.parse(ck.toString());
+                for (let i in obj) {
+                    await db.put(obj[i], i);
+                }
+                res.send({
+                    success: true,
+                });
+            } else {
+                res.send({
+                    success: false,
+                    error: "Unauthorized.",
+                })
+            }
+        } catch (e) {
+            res.send({
+                success: false,
+                error: e,
+            });
+        }
+    });
+})
+
+
+
+app.get("/_api/export", async (req, res) => {
+    try {
+        let obj = new URL("http://0.0.0.0"+req.url);
+        let token = obj.searchParams.get("token") || "";
+        if (await checkToken(token)) {
+            let all = await db.fetch();
+            let data = {};
+            for (let i in all.items) {
+                if (all.items[i].key.startsWith("CMT_")) {
+                    data[all.items[i].key] = all.items[i].value;
+                }
+            }
+            res.send({
+                success: true,
+                data,
+            });
+        } else {
+            res.send({
+                success: false,
+                error: "Unauthorized.",
+            })
+        }
+    } catch(e) {
+        console.warn(e);
+        res.send({
+            success: false,
+            error: e,
+        });
+    }
+})
+
+app.get("/_api/config", async (req, res) => {
+    try {
+        let obj = new URL("http://0.0.0.0"+req.url);
+        let token = obj.searchParams.get("token") || "";
+        if (await checkToken(token)) {
+            let data = {
+                ADMIN_EMAIL: (await db.get('ADMIN_EMAIL')),
+                ADMIN_NICKNAME: (await db.get('ADMIN_NICKNAME')),
+                ADMIN_LINK: (await db.get('ADMIN_LINK')),
+                DETALK_USERNANE: (await db.get('DETALK_USERNAME')),
+                GITHUB_OAUTH_SECRET: (await db.get('GITHUB_OAUTH_SECRET')),
+                SITE_NAME: (await db.get('SITE_NAME')),
+                SITE_LINK: (await db.get('SITE_LINK')),
+                FUNCTION_BEFORE_COMMENT: (await db.get('FUNCTION_BEFORE_COMMENT')),
+            };
+            res.send({
+                success: true,
+                data,
+            });
+        } else {
+            res.send({
+                success: false,
+                error: "Unauthorized.",
+            })
+        }
+    } catch(e) {
+        console.warn(e);
+        res.send({
+            success: false,
+            error: e,
+        });
+    }
+})
+
+
 module.exports = app;
