@@ -514,40 +514,43 @@ app.delete("/_api/top", async (req, res) => {
 // 注册
 
 app.get("/_api/reg", async (req, res) => {
-    let username = (await db.get('DETALK_USERNAME')).value;
-    let password = (await db.get('DETALK_PASSWORD')).value;
-    if (username && password) {
-        res.send({
-            success: false,
-            error: "Already registered.",
-            reg: true,
-        });
-        return false;
-    }
-    let obj = new URL("http://0.0.0.0"+req.url);
-    username = obj.searchParams.get("username") || "";
-    password = obj.searchParams.get("password") || "";
-    if (!username || !password || username.length > 15) {
-        res.send({
-            success: false,
-            error: "Invalid username or password.",
-            reg: false,
-        });
-        return false;
-    }
-    let usrdb = await db.put(username, 'DETALK_USERNAME');
-    let pwddb = await db.put(password, 'DETALK_PASSWORD');
-    if (usrdb && pwddb) {
-        res.send({
-            success: true,
-            message: "Registered.",
-            token: md5(new Date().getFullYear() + (new Date().getMonth() + 1) + username + password + "DETALK"),
-        });
-    } else {
-        res.send({
-            success: false,
-            error: "Failed to register.",
-        });
+    try {
+        let username = (await db.get('DETALK_USERNAME')).value;
+        let password = (await db.get('DETALK_PASSWORD')).value;
+        if (username && password) {
+            res.send({
+                success: false,
+                error: "Already registered.",
+                reg: true,
+            });
+            return false;
+        }
+    } catch (e) {
+        let obj = new URL("http://0.0.0.0"+req.url);
+        username = obj.searchParams.get("username") || "";
+        password = obj.searchParams.get("password") || "";
+        if (!username || !password || username.length > 15) {
+            res.send({
+                success: false,
+                error: "Invalid username or password.",
+                reg: false,
+            });
+            return false;
+        }
+        let usrdb = await db.put(username, 'DETALK_USERNAME');
+        let pwddb = await db.put(password, 'DETALK_PASSWORD');
+        if (usrdb && pwddb) {
+            res.send({
+                success: true,
+                message: "Registered.",
+                token: md5(new Date().getFullYear() + (new Date().getMonth() + 1) + username + password + "DETALK"),
+            });
+        } else {
+            res.send({
+                success: false,
+                error: "Failed to register.",
+            });
+        }
     }
 })
 
