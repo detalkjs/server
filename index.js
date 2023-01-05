@@ -190,14 +190,14 @@ app.put('/_api/comment', async (req, res) => {
                     auth,
                     label,
                 };
-                data = await beforeComment(data);
+                data = await beforeComment(data, id);
                 bflist.push(data);
                 let dbr = await db.put({
                     ...await getComment(fetchKey),
                     value: bflist,
                 }, fetchKey);
                 if (dbr) {
-                    afterComment(data);
+                    afterComment(data, id);
                     res.send(JSON.stringify({
                         success: true,
                         message: "Comment sended.",
