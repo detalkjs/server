@@ -1,6 +1,6 @@
 const { Deta } = require('deta');
 const deta = Deta();
-const db = deta.Base('detalk');
+const db = deta.Base(process.env.BASE_NAME || 'detalk');
 const fetch = require('node-fetch');
 
 module.exports.githubLogin = async (token, cid) => {

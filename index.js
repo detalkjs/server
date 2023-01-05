@@ -2,7 +2,7 @@ const express = require('express')
 const app = express();
 const { Deta } = require('deta');
 const deta = Deta();
-const db = deta.Base('detalk');
+const db = deta.Base(process.env.BASE_NAME || 'detalk');
 const { getComment } = require('./src/getComment');
 const { checkToken } = require('./src/checkToken');
 const md5 = require("js-md5");
@@ -13,6 +13,7 @@ const { generate } = require("./src/generate");
 const { afterComment } = require("./src/action/afterComment");
 const { beforeComment } = require("./src/action/beforeComment");
 const { githubLogin } = require('./src/login/github');
+
 function textconvert(text) {
     text = text.replace(/[<>&"]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c];});
     text = text.replace(/\r?\n/g," ");

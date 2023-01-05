@@ -1,6 +1,6 @@
 const { Deta } = require('deta');
 const deta = Deta();
-const db = deta.Base('detalk');
+const db = deta.Base(process.env.BASE_NAME || 'detalk');
 const md5 = require("js-md5");
 module.exports.checkToken = async (token) => {
     let username = (await db.get('DETALK_USERNAME')).value;
