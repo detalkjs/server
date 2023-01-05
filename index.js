@@ -697,5 +697,12 @@ app.get("/_api/config", async (req, res) => {
     }
 })
 
+app.get("/_api/init", async (req, res) => {
+    await db.put('DETALK', 'DETALK_INIT');
+    res.send({
+        success: true,
+    });
+});
+
 
 module.exports = app;
