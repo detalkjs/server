@@ -680,6 +680,7 @@ app.get("/_api/config", async (req, res) => {
                 SITE_NAME: (await db.get('SITE_NAME')),
                 SITE_LINK: (await db.get('SITE_LINK')),
                 FUNCTION_BEFORE_COMMENT: (await db.get('FUNCTION_BEFORE_COMMENT')),
+                FUNCTION_AFTER_COMMENT: (await db.get('FUNCTION_AFTER_COMMENT')),
             };
             res.send({
                 success: true,
