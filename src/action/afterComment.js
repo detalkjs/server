@@ -3,6 +3,7 @@ const { Deta } = require('deta');
 const deta = Deta();
 const db = deta.Base(process.env.BASE_NAME || 'detalk');
 const fetch = require('node-fetch');
+const nodemailer = require("nodemailer");
 module.exports.afterComment = async ($data, $id) => {
     // console.log(db.get('FUNCTION_BEFORE_COMMENT').value || '');
     try {

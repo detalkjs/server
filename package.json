@@ -22,6 +22,7 @@
     "js-md5": "^0.7.3",
     "marked": "^4.2.4",
     "node-fetch": "^2.6.7",
+    "nodemailer": "^6.8.0",
     "sanitize-html": "^2.8.0"
   },
   "repository": {

@@ -33,6 +33,7 @@ module.exports.recaptcha_verify = async (token) => {
         if (resp.success && resp.score >= limit) return true;
         else return false;
     } catch(e) {
+        console.warn(e);
         return false;
     }
 };
