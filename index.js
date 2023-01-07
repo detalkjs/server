@@ -697,6 +697,7 @@ app.get("/_api/config", async (req, res) => {
                 FUNCTION_AFTER_COMMENT: (await db.get('FUNCTION_AFTER_COMMENT')),
                 RECAPTCHA_SECRET: (await db.get('RECAPTCHA_SECRET')),
                 RECAPTCHA_LIMIT: (await db.get('RECAPTCHA_LIMIT')),
+                ACCESS_SECRET: (await db.get('ACCESS_SECRET')),
             };
             res.send({
                 success: true,
