@@ -13,6 +13,7 @@ const { generate } = require("./src/generate");
 const { afterComment } = require("./src/action/afterComment");
 const { beforeComment } = require("./src/action/beforeComment");
 const { githubLogin } = require('./src/login/github');
+const { recaptcha_verify } = require('./src/recaptcha');
 
 function textconvert(text) {
     text = text.replace(/[<>&"]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c];});
@@ -22,6 +23,7 @@ function textconvert(text) {
     text = text.replace(/((\s|&nbsp;)*\r?\n)+$/g,'');
     return text;
 }
+
 
 // CORS
 app.use((req, res, next) => {
@@ -155,7 +157,7 @@ app.put('/_api/comment', async (req, res) => {
     req.on('data', async function(ck) {
         try {
             const rqb = JSON.parse(ck.toString());
-            let { nickname, email, content, replyTo, url, id, auth } = rqb;
+            let { nickname, email, content, replyTo, url, id, auth, recaptcha } = rqb;
             let label = null;
             if (await checkToken(auth)) {
                 if ((!nickname || !email || !url)) {
@@ -171,6 +173,18 @@ app.put('/_api/comment', async (req, res) => {
             url = textconvert(url) || "";
             nickname = textconvert(nickname);
             content = sanitizeHtml(marked.parse(content));
+
+
+            // reCAPTCHA 验证
+
+            if (await recaptcha_verify(recaptcha)) {
+                console.log("reCAPTCHA 验证成功");
+            } else {
+                throw 'reCAPTCHA Error.';
+            }
+
+
+
             const fetchKey = "CMT_"+id;
             let bflist = await getComment(fetchKey) || {};
             bflist = bflist.value;
@@ -681,6 +695,8 @@ app.get("/_api/config", async (req, res) => {
                 SITE_LINK: (await db.get('SITE_LINK')),
                 FUNCTION_BEFORE_COMMENT: (await db.get('FUNCTION_BEFORE_COMMENT')),
                 FUNCTION_AFTER_COMMENT: (await db.get('FUNCTION_AFTER_COMMENT')),
+                RECAPTCHA_SECRET: (await db.get('RECAPTCHA_SECRET')),
+                RECAPTCHA_LIMIT: (await db.get('RECAPTCHA_LIMIT')),
             };
             res.send({
                 success: true,
