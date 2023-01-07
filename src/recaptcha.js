@@ -16,7 +16,7 @@ module.exports.recaptcha_verify = async (token) => {
         if (!(await db.get('RECAPTCHA_SECRET')) || !(await db.get('RECAPTCHA_SECRET')).value) {
             return true;
         }
-        if ((await db.get('ACCESS_SECRET')) && (await db.get('ACCESS_SECRET')).value && inarray((await db.get('ACCESS_SECRET')).value, token)) {
+        if ((await db.get('ACCESS_SECRET')) && (await db.get('ACCESS_SECRET')).value && inarray(JSON.parse((await db.get('ACCESS_SECRET')).value), token)) {
             return true;
         }
 
