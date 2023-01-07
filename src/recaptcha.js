@@ -21,7 +21,12 @@ module.exports.recaptcha_verify = async (token) => {
         }
 
         const secret = (await db.get('RECAPTCHA_SECRET')).value;
-        const limit = (await db.get('RECAPTCHA_LIMIT')).value || 0.5;
+        let limit;
+        if ((await db.get('RECAPTCHA_LIMIT')) && (await db.get('RECAPTCHA_LIMIT')).value) {
+            limit = Number((await db.get('RECAPTCHA_LIMIT')).value);
+        } else {
+            limit = 0.5;
+        }
         const reqUrl = `https://recaptcha.net/recaptcha/api/siteverify?secret=${secret}&response=${token}`;
         let resp = await fetch(reqUrl).then(res => res.json());
         console.log(resp);

@@ -180,7 +180,7 @@ app.put('/_api/comment', async (req, res) => {
             if (await recaptcha_verify(recaptcha)) {
                 console.log("reCAPTCHA 验证成功");
             } else {
-                throw 'reCAPTCHA Error.';
+                throw 'Error: You have not passed reCAPTCHA verification.';
             }
 
 
