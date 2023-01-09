@@ -1,6 +1,6 @@
 {
   "name": "@detalk/server",
-  "version": "1.2.0-alpha",
+  "version": "1.2.0",
   "description": "Detalk is a simple comment plugin.",
   "main": "index.js",
   "scripts": {
