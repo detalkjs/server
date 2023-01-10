@@ -193,7 +193,7 @@ app.put('/_api/comment', async (req, res) => {
 
             // reCAPTCHA 验证
 
-            if (await recaptcha_verify(recaptcha) || await checkToken(auth)) {
+            if ((await recaptcha_verify(recaptcha)) || (await checkToken(auth))) {
                 console.log("reCAPTCHA 验证成功");
             } else {
                 throw 'Error: You have not passed reCAPTCHA verification.';
