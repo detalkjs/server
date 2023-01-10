@@ -177,13 +177,15 @@ app.put('/_api/comment', async (req, res) => {
 
             // reCAPTCHA 验证
 
-            if (await recaptcha_verify(recaptcha)) {
+            if (await recaptcha_verify(recaptcha) || await checkToken(auth)) {
                 console.log("reCAPTCHA 验证成功");
             } else {
                 throw 'Error: You have not passed reCAPTCHA verification.';
             }
 
-
+            if (label != 'admin' && id == '@TALK' && !replyTo) {
+                throw 'Error: You can\'t send the comment to the talk page.';
+            }
 
             const fetchKey = "CMT_"+id;
             let bflist = await getComment(fetchKey) || {};
