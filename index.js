@@ -1,7 +1,7 @@
 const express = require('express')
 const app = express();
 const { Deta } = require('deta');
-const deta = Deta();
+const deta = Deta(process.env.DETA_DATA_KEY);
 const db = deta.Base(process.env.BASE_NAME || 'detalk');
 const { getComment } = require('./src/getComment');
 const { checkToken } = require('./src/checkToken');
@@ -14,6 +14,9 @@ const { afterComment } = require("./src/action/afterComment");
 const { beforeComment } = require("./src/action/beforeComment");
 const { githubLogin } = require('./src/login/github');
 const { recaptcha_verify } = require('./src/recaptcha');
+const port = parseInt(process.env.PORT) || 8080;
+
+console.debug('[DEBUG] App init with Base Name: '+process.env.BASE_NAME + ' and Data Key: '+process.env.DETA_DATA_KEY);
 
 function textconvert(text) {
     text = text.replace(/[<>&"]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c];});
@@ -744,4 +747,11 @@ app.get("/_api/init", async (req, res) => {
 });
 
 
-module.exports = app;
+// module.exports = app;
+
+// Detalk.js v2 supports Deta Space
+
+
+app.listen(port, () => {
+    console.log(`Detalk.js: Listening on port ${port}`);
+});

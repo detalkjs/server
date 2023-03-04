@@ -1,6 +1,6 @@
 // 只有评论成功才会执行
 const { Deta } = require('deta');
-const deta = Deta();
+const deta = Deta(process.env.DETA_DATA_KEY);
 const db = deta.Base(process.env.BASE_NAME || 'detalk');
 const fetch = require('node-fetch');
 const nodemailer = require("nodemailer");

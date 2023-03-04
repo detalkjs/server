@@ -1,0 +1,18 @@
+# Spacefile Docs: https://go.deta.dev/docs/spacefile/v0
+v: 0
+app_name: "Detalk.js"
+micros:
+  - name: server
+    src: .
+    engine: nodejs16
+    primary: true
+    public_routes:
+      - "/*"
+    presets:
+      env:
+        - name: DETA_DATA_KEY
+          description: The Data Key of Deta Space Collection. (Optional)
+          default: ""
+        - name: BASE_NAME
+          description: The Deta Base name for Detalk. (Optional)
+          default: "detalk"
