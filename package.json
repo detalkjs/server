@@ -1,7 +1,7 @@
 {
   "name": "@detalk/server",
-  "version": "1.3.1",
-  "description": "Detalk is a simple comment plugin.",
+  "version": "2.0.0-alpha.2",
+  "description": "Detalk is a simple comment plugin based on Deta Micros and Deta Bases. | 简单的评论插件，部署于 Deta。",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
