@@ -1,32 +1,29 @@
 const express = require('express')
-const app = express();
 const { Deta } = require('deta');
-const deta = Deta(process.env.DETA_DATA_KEY);
-const db = deta.Base(process.env.BASE_NAME || 'detalk');
-const { getComment } = require('./src/getComment');
-const { checkToken } = require('./src/checkToken');
 const md5 = require("js-md5");
 const marked = require("marked");
 const sanitizeHtml = require('sanitize-html');
+
+// 导入 Detalk.js 依赖文件
 const version = require("package.json").version;
+const { getComment } = require('./src/getComment');
+const { checkToken } = require('./src/checkToken');
 const { generate } = require("./src/generate");
 const { afterComment } = require("./src/action/afterComment");
 const { beforeComment } = require("./src/action/beforeComment");
 const { githubLogin } = require('./src/login/github');
 const { recaptcha_verify } = require('./src/recaptcha');
+const { textconvert } = require('./src/textconvert');
+const { generateConfigRes } = require('./src/generateConfigRes');
+const { exportData } = require('./src/data/export');
+
+
 const port = parseInt(process.env.PORT) || 8080;
+const app = express();
+const deta = Deta(process.env.DETA_DATA_KEY);
+const db = deta.Base(process.env.BASE_NAME || 'detalk');
 
 console.debug('[DEBUG] App init with Base Name: '+process.env.BASE_NAME + ' and Data Key: '+process.env.DETA_DATA_KEY);
-
-function textconvert(text) {
-    text = text.replace(/[<>&"]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c];});
-    text = text.replace(/\r?\n/g," ");
-    text = text.replace(/((\s|&nbsp;)*\r?\n){1,}/g,"\r\n\r\n");
-    text = text.replace(/^((\s|&nbsp;)*\r?\n)+/g,'');
-    text = text.replace(/((\s|&nbsp;)*\r?\n)+$/g,'');
-    return text;
-}
-
 
 // CORS
 app.use((req, res, next) => {
@@ -41,7 +38,7 @@ app.use((req, res, next) => {
 app.get('/', (req, res) => {
     res.send(JSON.stringify({
         version,
-        message: "Detalk Server is running.",
+        message: "Detalk.js Server is running.",
         timestamp: Date.now(),
     }));
 });
@@ -675,13 +672,7 @@ app.get("/_api/export", async (req, res) => {
         let obj = new URL("http://0.0.0.0"+req.url);
         let token = obj.searchParams.get("token") || "";
         if (await checkToken(token)) {
-            let all = await db.fetch();
-            let data = {};
-            for (let i in all.items) {
-                if (all.items[i].key.startsWith("CMT_")) {
-                    data[all.items[i].key] = all.items[i].value;
-                }
-            }
+            let data = await exportData();
             res.send({
                 success: true,
                 data,
@@ -706,20 +697,21 @@ app.get("/_api/config", async (req, res) => {
         let obj = new URL("http://0.0.0.0"+req.url);
         let token = obj.searchParams.get("token") || "";
         if (await checkToken(token)) {
-            let data = {
-                ADMIN_EMAIL: (await db.get('ADMIN_EMAIL')),
-                ADMIN_NICKNAME: (await db.get('ADMIN_NICKNAME')),
-                ADMIN_LINK: (await db.get('ADMIN_LINK')),
-                DETALK_USERNANE: (await db.get('DETALK_USERNAME')),
-                GITHUB_OAUTH_SECRET: (await db.get('GITHUB_OAUTH_SECRET')),
-                SITE_NAME: (await db.get('SITE_NAME')),
-                SITE_LINK: (await db.get('SITE_LINK')),
-                FUNCTION_BEFORE_COMMENT: (await db.get('FUNCTION_BEFORE_COMMENT')),
-                FUNCTION_AFTER_COMMENT: (await db.get('FUNCTION_AFTER_COMMENT')),
-                RECAPTCHA_SECRET: (await db.get('RECAPTCHA_SECRET')),
-                RECAPTCHA_LIMIT: (await db.get('RECAPTCHA_LIMIT')),
-                ACCESS_SECRET: (await db.get('ACCESS_SECRET')),
-            };
+            const generateConfigList = [
+                'ADMIN_EMAIL',
+                'ADMIN_NICKNAME',
+                'ADMIN_LINK',
+                'DETALK_USERNAME',
+                'GITHUB_OAUTH_SECRET',
+                'SITE_NAME',
+                'SITE_LINK',
+                'FUNCTION_BEFORE_COMMENT',
+                'FUNCTION_AFTER_COMMENT',
+                'RECAPTCHA_SECRET',
+                'RECAPTCHA_LIMIT',
+                'ACCESS_SECRET',
+            ];
+            let data = await generateConfigRes(generateConfigList);
             res.send({
                 success: true,
                 data,
@@ -739,6 +731,7 @@ app.get("/_api/config", async (req, res) => {
     }
 })
 
+// 初始化数据库
 app.get("/_api/init", async (req, res) => {
     await db.put('DETALK', 'DETALK_INIT');
     res.send({
@@ -746,12 +739,7 @@ app.get("/_api/init", async (req, res) => {
     });
 });
 
-
-// module.exports = app;
-
-// Detalk.js v2 supports Deta Space
-
-
+// 监听端口
 app.listen(port, () => {
     console.log(`Detalk.js: Listening on port ${port}`);
 });
