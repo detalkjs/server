@@ -16,19 +16,35 @@ const { recaptcha_verify } = require('./src/recaptcha');
 const { textconvert } = require('./src/textconvert');
 const { generateConfigRes } = require('./src/generateConfigRes');
 const { exportData } = require('./src/data/export');
-
+const { sanitizeConfig } = require('./src/data/sanitize');
 
 const port = parseInt(process.env.PORT) || 8080;
 const app = express();
 const deta = Deta(process.env.DETA_DATA_KEY);
 const db = deta.Base(process.env.BASE_NAME || 'detalk');
 
-console.debug('[DEBUG] App init with Base Name: '+process.env.BASE_NAME + ' and Data Key: '+process.env.DETA_DATA_KEY);
+const generateConfigList = [
+    'ADMIN_EMAIL',
+    'ADMIN_NICKNAME',
+    'ADMIN_LINK',
+    'DETALK_USERNAME',
+    'GITHUB_OAUTH_SECRET',
+    'SITE_NAME',
+    'SITE_LINK',
+    'FUNCTION_BEFORE_COMMENT',
+    'FUNCTION_AFTER_COMMENT',
+    'RECAPTCHA_SECRET',
+    'RECAPTCHA_LIMIT',
+    'ACCESS_SECRET',
+];
+
+
+console.debug('[DEBUG] App init with Base Name: ' + process.env.BASE_NAME + ' and Data Key: ' + process.env.DETA_DATA_KEY);
 
 // CORS
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Headers', 'Authorization,X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Request-Method' );
+    res.header('Access-Control-Allow-Headers', 'Authorization,X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Request-Method');
     res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PATCH, PUT, DELETE');
     res.header('Allow', 'GET, POST, PATCH, OPTIONS, PUT, DELETE');
     res.header('Content-Type', 'application/json');
@@ -47,7 +63,7 @@ app.get('/', (req, res) => {
  * Get Comments
  */
 app.get('/_api/comment', async (req, res) => {
-    let obj = new URL("http://0.0.0.0"+req.url);
+    let obj = new URL("http://0.0.0.0" + req.url);
     let id = obj.searchParams.get("id") || "/";
     let page = obj.searchParams.get("pageid") || "0";
     let pageSize = obj.searchParams.get("pagesize") || "1";
@@ -56,8 +72,8 @@ app.get('/_api/comment', async (req, res) => {
     let timeFst = obj.searchParams.get("timefst") || false;
     timeFst = Boolean(timeFst);
     page = Number(page) || 0;
-    
-    let resp = await getComment("CMT_" + id) || {key: "CMT_" + id, value: []};
+
+    let resp = await getComment("CMT_" + id) || { key: "CMT_" + id, value: [] };
 
     let fromPage, toPage;
     if (!timeFst) {
@@ -69,7 +85,7 @@ app.get('/_api/comment', async (req, res) => {
     }
     console.log(fromPage, toPage);
     let rtData = [];
-    if (fromPage == 0 || fromPage == resp.value.length -1) {
+    if (fromPage == 0 || fromPage == resp.value.length - 1) {
         try {
             let topi = JSON.parse(JSON.stringify(resp.value[resp.top]));
             topi.email = md5(topi.email);
@@ -81,7 +97,7 @@ app.get('/_api/comment', async (req, res) => {
                 }
             }
             rtData.push(topi);
-        } catch(e) {console.warn(e)}
+        } catch (e) { console.warn(e) }
     }
     let hasNextPage = false;
     if (all) {
@@ -95,7 +111,7 @@ app.get('/_api/comment', async (req, res) => {
                         resp.value[i].replies[j].email = md5(resp.value[i].replies[j].email);
                     }
                 }
-            } catch(e) {}
+            } catch (e) { }
         }
         res.send({
             value: resp.value,
@@ -123,7 +139,7 @@ app.get('/_api/comment', async (req, res) => {
                             resp.value[i].replies[j].email = md5(resp.value[i].replies[j].email);
                         }
                     }
-                } catch(e) {}
+                } catch (e) { }
                 rtData.push(resp.value[i]);
             }
         } else {
@@ -138,11 +154,11 @@ app.get('/_api/comment', async (req, res) => {
                             resp.value[i].replies[j].email = md5(resp.value[i].replies[j].email);
                         }
                     }
-                } catch(e) {}
+                } catch (e) { }
                 rtData.push(resp.value[i]);
             }
         }
-        if (resp.value[toPage+1]) hasNextPage = true;
+        if (resp.value[toPage + 1]) hasNextPage = true;
     }
 
     res.send({
@@ -154,7 +170,7 @@ app.get('/_api/comment', async (req, res) => {
 });
 
 app.put('/_api/comment', async (req, res) => {
-    req.on('data', async function(ck) {
+    req.on('data', async function (ck) {
         try {
             const rqb = JSON.parse(ck.toString());
             let { nickname, email, content, replyTo, url, id, auth, recaptcha } = rqb;
@@ -172,23 +188,7 @@ app.put('/_api/comment', async (req, res) => {
             if (nickname.length >= 15 || content.length >= 500 || email.length >= 50 || url.length >= 100) throw "Nickname, email, url or content is too long.";
             url = textconvert(url) || "";
             nickname = textconvert(nickname);
-            content = sanitizeHtml(marked.parse(content), {
-                allowedTags: [
-                    "address", "article", "aside", "footer", "header", "h1", "h2", "h3", "h4",
-                    "h5", "h6", "hgroup", "main", "nav", "section", "blockquote", "dd", "div",
-                    "dl", "dt", "figcaption", "figure", "hr", "li", "main", "ol", "p", "pre",
-                    "ul", "a", "abbr", "b", "bdi", "bdo", "br", "cite", "code", "data", "dfn",
-                    "em", "i", "kbd", "mark", "q", "rb", "rp", "rt", "rtc", "ruby", "s", "samp",
-                    "small", "span", "strong", "sub", "sup", "time", "u", "var", "wbr", "caption",
-                    "col", "colgroup", "table", "tbody", "td", "tfoot", "th", "thead", "tr", "img"
-                ],
-                allowedAttributes: {
-                    a: [ 'href', 'name', 'target' ],
-                    // We don't currently allow img itself by default, but
-                    // these attributes would make sense if we did.
-                    img: [ 'src', 'srcset', 'alt', 'title', 'width', 'height' ]
-                },
-            });
+            content = sanitizeHtml(marked.parse(content), sanitizeConfig);
 
 
             // reCAPTCHA 验证
@@ -203,7 +203,7 @@ app.put('/_api/comment', async (req, res) => {
                 throw 'Error: You can\'t send the comment to the talk page.';
             }
 
-            const fetchKey = "CMT_"+id;
+            const fetchKey = "CMT_" + id;
             let bflist = await getComment(fetchKey) || {};
             bflist = bflist.value;
             if (!bflist) { bflist = []; }
@@ -290,9 +290,9 @@ app.put('/_api/comment', async (req, res) => {
 });
 
 app.delete("/_api/comment", async (req, res) => {
-    let obj = new URL("http://0.0.0.0"+req.url);
+    let obj = new URL("http://0.0.0.0" + req.url);
     let id = "CMT_" + obj.searchParams.get("id") || "/";
-    let fetchKey  = id;
+    let fetchKey = id;
     let rpid = obj.searchParams.get("rpid") || "";
     let auth = obj.searchParams.get("auth") || "";
     let hide = obj.searchParams.get("hide") || false;
@@ -395,7 +395,7 @@ app.get("/config", (req, res) => {
 app.get("/_api/login", async (req, res) => {
     let username = (await db.get('DETALK_USERNAME')).value;
     let password = (await db.get('DETALK_PASSWORD')).value;
-    let obj = new URL("http://0.0.0.0"+req.url);
+    let obj = new URL("http://0.0.0.0" + req.url);
     let p_username = obj.searchParams.get("username") || "";
     let p_password = obj.searchParams.get("password") || "";
     console.log(username, p_username)
@@ -416,7 +416,7 @@ app.get("/_api/login", async (req, res) => {
 
 // 检查 Token 是否有效
 app.get("/_api/token", async (req, res) => {
-    let obj = new URL("http://0.0.0.0"+req.url);
+    let obj = new URL("http://0.0.0.0" + req.url);
     let token = obj.searchParams.get("token") || "";
     if (await checkToken(token)) {
         res.send({
@@ -433,7 +433,7 @@ app.get("/_api/token", async (req, res) => {
 // 用户信息
 
 app.get("/_api/profile", async (req, res) => {
-    let obj = new URL("http://0.0.0.0"+req.url);
+    let obj = new URL("http://0.0.0.0" + req.url);
     let token = obj.searchParams.get("token") || "";
     if (token.startsWith("gh_")) {
         try {
@@ -470,7 +470,7 @@ app.get("/_api/profile", async (req, res) => {
 
 // 置顶
 app.get("/_api/top", async (req, res) => {
-    let obj = new URL("http://0.0.0.0"+req.url);
+    let obj = new URL("http://0.0.0.0" + req.url);
     let token = obj.searchParams.get("token") || "";
     let pid = obj.searchParams.get("page") || "";
     let rpid = obj.searchParams.get("rpid") || "";
@@ -515,7 +515,7 @@ app.get("/_api/top", async (req, res) => {
 // 取消置顶
 
 app.delete("/_api/top", async (req, res) => {
-    let obj = new URL("http://0.0.0.0"+req.url);
+    let obj = new URL("http://0.0.0.0" + req.url);
     let token = obj.searchParams.get("token") || "";
     let pid = obj.searchParams.get("page") || "";
     pid = "CMT_" + pid;
@@ -558,7 +558,7 @@ app.get("/_api/reg", async (req, res) => {
             return false;
         }
     } catch (e) {
-        let obj = new URL("http://0.0.0.0"+req.url);
+        let obj = new URL("http://0.0.0.0" + req.url);
         username = obj.searchParams.get("username") || "";
         password = obj.searchParams.get("password") || "";
         if (!username || !password || username.length > 15) {
@@ -588,7 +588,7 @@ app.get("/_api/reg", async (req, res) => {
 
 app.get("/_api/all", async (req, res) => {
     try {
-        let obj = new URL("http://0.0.0.0"+req.url);
+        let obj = new URL("http://0.0.0.0" + req.url);
         let token = obj.searchParams.get("token") || "";
         if (await checkToken(token)) {
             // let all = await db.fetch({
@@ -611,7 +611,7 @@ app.get("/_api/all", async (req, res) => {
                 error: "Unauthorized.",
             })
         }
-    } catch(e) {
+    } catch (e) {
         console.warn(e);
         res.send({
             success: false,
@@ -622,7 +622,7 @@ app.get("/_api/all", async (req, res) => {
 
 app.post("/_api/markdown", (req, res) => {
     res.header('Content-Type', 'application/json');
-    req.on('data', async function(ck) {
+    req.on('data', async function (ck) {
         try {
             res.send({
                 success: true,
@@ -638,9 +638,9 @@ app.post("/_api/markdown", (req, res) => {
 })
 
 app.put("/_api/config", (req, res) => {
-    req.on('data', async function(ck) {
+    req.on('data', async function (ck) {
         try {
-            let oj = new URL("http://0.0.0.0"+req.url);
+            let oj = new URL("http://0.0.0.0" + req.url);
             let token = oj.searchParams.get("token") || "";
             if (await checkToken(token)) {
                 let obj = JSON.parse(ck.toString());
@@ -669,7 +669,7 @@ app.put("/_api/config", (req, res) => {
 
 app.get("/_api/export", async (req, res) => {
     try {
-        let obj = new URL("http://0.0.0.0"+req.url);
+        let obj = new URL("http://0.0.0.0" + req.url);
         let token = obj.searchParams.get("token") || "";
         if (await checkToken(token)) {
             let data = await exportData();
@@ -683,7 +683,7 @@ app.get("/_api/export", async (req, res) => {
                 error: "Unauthorized.",
             })
         }
-    } catch(e) {
+    } catch (e) {
         console.warn(e);
         res.send({
             success: false,
@@ -694,23 +694,9 @@ app.get("/_api/export", async (req, res) => {
 
 app.get("/_api/config", async (req, res) => {
     try {
-        let obj = new URL("http://0.0.0.0"+req.url);
+        let obj = new URL("http://0.0.0.0" + req.url);
         let token = obj.searchParams.get("token") || "";
         if (await checkToken(token)) {
-            const generateConfigList = [
-                'ADMIN_EMAIL',
-                'ADMIN_NICKNAME',
-                'ADMIN_LINK',
-                'DETALK_USERNAME',
-                'GITHUB_OAUTH_SECRET',
-                'SITE_NAME',
-                'SITE_LINK',
-                'FUNCTION_BEFORE_COMMENT',
-                'FUNCTION_AFTER_COMMENT',
-                'RECAPTCHA_SECRET',
-                'RECAPTCHA_LIMIT',
-                'ACCESS_SECRET',
-            ];
             let data = await generateConfigRes(generateConfigList);
             res.send({
                 success: true,
@@ -722,7 +708,7 @@ app.get("/_api/config", async (req, res) => {
                 error: "Unauthorized.",
             })
         }
-    } catch(e) {
+    } catch (e) {
         console.warn(e);
         res.send({
             success: false,

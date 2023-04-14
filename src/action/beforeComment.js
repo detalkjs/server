@@ -7,7 +7,7 @@ module.exports.beforeComment = async ($data, $id) => {
     // console.log(db.get('FUNCTION_BEFORE_COMMENT').value || '');
     try {
         eval((await db.get('FUNCTION_BEFORE_COMMENT')).value || '');
-    } catch(e) {
+    } catch (e) {
         console.warn(e);
     }
     return $data;
