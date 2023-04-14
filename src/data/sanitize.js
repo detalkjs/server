@@ -1,4 +1,4 @@
-export default {
+module.exports.sanitizeConfig = {
     allowedTags: [
         "address", "article", "aside", "footer", "header", "h1", "h2", "h3", "h4",
         "h5", "h6", "hgroup", "main", "nav", "section", "blockquote", "dd", "div",
