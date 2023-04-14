@@ -1,6 +1,6 @@
 {
   "name": "@detalk/server",
-  "version": "2.0.0-alpha.2",
+  "version": "2.0.0",
   "description": "Detalk is a simple comment plugin based on Deta Micros and Deta Bases. | 简单的评论插件，部署于 Deta。",
   "main": "index.js",
   "scripts": {

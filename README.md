@@ -1,4 +1,4 @@
-# Detalk
+# Detalk.js Server
 
 > 🎉 Detalk is a simple comment plugin based on Deta Micros and Deta Bases.
 > 
