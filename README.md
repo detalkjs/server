@@ -1,23 +1,25 @@
 # Detalk.js Server
 
-> 🎉 Detalk is a simple comment plugin based on Deta Micros and Deta Bases.
+> 🎉 Detalk.js is a simple comment plugin based on Deta Space.
 > 
-> 🎉 一款简单、高自定义性的评论插件，部署于 Deta。
+> 🎉 一款简单、高自定义性的评论插件，部署于 Deta Space。
 
-## 为什么是 Detalk？
+## 为什么是 Detalk.js？
 
 - 快，开箱即用。它不需要你写繁琐的配置文件，也不需要你定义麻烦的环境变量。
 - 轻，快速加载。前端打包文件仅 60kb, Gzip 压缩后仅 14kb! 同时，主要功能得以保留。
-- 易，免费部署。Detalk 在 Deta 平台上可免费快速部署。
-- 强，高自定义。Detalk 提供高自定义性，完整 API 支持，同时还具备脚本插件功能。
+- 易，免费部署。Detalk.js 在 Deta 平台上可免费快速部署。
+- 强，高自定义。Detalk.js 提供高自定义性，完整 API 支持，同时还具备脚本插件功能。
 
-## 部署到 Deta
+## 部署到 Deta Space
 
-Detalk 可以 100% 兼容的运行在 Deta 平台上。使用下方的按键即可一键部署至 Deta，这需要您有一个 Deta 账号。
+Detalk.js 可以 100% 兼容的运行在 Deta Space 平台上。使用下方的链接即可一键部署至 Deta Space，这需要您有一个 Deta 账号。
 
-[![Deploy](https://button.deta.dev/1/svg)](https://go.deta.dev/deploy?repo=https://github.com/detalkjs/server)
+[![Deploy](https://deta.space/buttons/dark.svg)](https://deta.space/discovery/@ohhhcky/detalkjs)
 
 关于部署到 Deta 的更多信息，请[见此处](https://detalk.js.org/server/one-click.html)。
+
+如果需要从 Deta Cloud 迁移，请参考[此篇说明](https://github.com/orgs/detalkjs/discussions/5)。
 
 ## 更多文档
 
